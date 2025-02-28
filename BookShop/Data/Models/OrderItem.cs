@@ -1,5 +1,5 @@
 ﻿namespace BookShop.Data.Models;
-//просто дополнительная информация информация 
+//просто дополнительная информация  
 public class OrderItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();

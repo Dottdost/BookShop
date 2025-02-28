@@ -10,7 +10,8 @@ public class Book
     public string Description { get; set; } 
     public string ImageUrl { get; set; } 
     public Guid CategoryId { get; set; }
-    
+    public decimal? Discount { get; set; } // скидка если будет
+
     public Category Category { get; set; }
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }
