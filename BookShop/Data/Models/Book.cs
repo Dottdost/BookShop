@@ -9,9 +9,12 @@ public class Book
     public int Stock { get; set; }
     public string Description { get; set; } 
     public string ImageUrl { get; set; } 
-    public Guid CategoryId { get; set; }
+    public Guid GenreId { get; set; }
+    public Guid PublisherId { get; set; } 
+    
     public decimal? Discount { get; set; } // скидка если будет
-
-    public Category Category { get; set; }
+    public Genre Genre { get; set; } 
+    public Publisher Publisher { get; set; } 
+    public Warehouse Warehouse { get; set; } 
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

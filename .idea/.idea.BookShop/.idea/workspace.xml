@@ -10,7 +10,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e5c44c6c-0b20-426f-8797-4e8562b58805" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/BookShop/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/BookShop/Program.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BookShop/Data/Models/Genre.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BookShop/Data/Models/Publisher.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BookShop/Data/Models/Warehouse.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.BookShop/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.BookShop/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BookShop/Data/Models/Book.cs" beforeDir="false" afterPath="$PROJECT_DIR$/BookShop/Data/Models/Book.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BookShop/Data/Models/Category.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/BookShop/obj/Debug/net8.0/BookShop.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/BookShop/obj/Debug/net8.0/BookShop.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BookShop/obj/Debug/net8.0/BookShop.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/BookShop/obj/Debug/net8.0/BookShop.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BookShop/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/BookShop/obj/rider.project.restore.info" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +50,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -102,6 +111,8 @@
       <updated>1740662906866</updated>
       <workItem from="1740662908469" duration="2522000" />
       <workItem from="1740740356762" duration="674000" />
+      <workItem from="1740747347807" duration="936000" />
+      <workItem from="1740749720387" duration="300000" />
     </task>
     <servers />
   </component>
