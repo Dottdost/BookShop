@@ -18,9 +18,11 @@ namespace BookShop.Data;
         public DbSet<User> Users { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
-
+        public DbSet<BookAttribute> BookAttributes { get; set; }
+        public DbSet<Attribute> Attributes { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(LibraryContext).Assembly); 
+
         }
     }
