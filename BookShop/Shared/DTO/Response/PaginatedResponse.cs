@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Shared.DTO.Response;
+namespace BookShop.Shared.DTO.Response;
 
 public class PaginatedResponse<TResult>
 {

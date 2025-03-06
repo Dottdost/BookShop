@@ -31,9 +31,4 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Services\Expressions\" />
-      <Folder Include="Services\Interfaces\" />
-    </ItemGroup>
-
 </Project>

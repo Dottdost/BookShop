@@ -1,12 +1,13 @@
-namespace BookShop.Shared.DTO.Requests;
+namespace Shared.DTO.Response;
 
-public record CreateBookDTO(
+public record BookResponseDTO(
+    Guid Id,
     string Title,
     string Author,
     decimal Price,
     int Stock,
     string Description,
     string ImageUrl,
-    Guid GenreId,
-    Guid PublisherId
+    string Genre,
+    string Publisher
 );
