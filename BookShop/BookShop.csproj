@@ -32,7 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Auth\" />
+      <Folder Include="Auth\ControllersAuth\Contexts\" />
     </ItemGroup>
 
 </Project>
