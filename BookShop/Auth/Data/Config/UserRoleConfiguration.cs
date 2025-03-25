@@ -2,7 +2,7 @@ using BookShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BookShop.Data.FluentConfigs;
+namespace BookShop.Auth.Data.Config;
 public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
 {
     public void Configure(EntityTypeBuilder<UserRole> builder)
@@ -22,3 +22,4 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
         builder.HasIndex(ur => new { ur.UserId, ur.RoleId }).IsUnique();
     }
 }
+

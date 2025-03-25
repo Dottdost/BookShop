@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookShop.Auth.ControllersAuth;
-
 [ApiController]
 [Route("api/v1/[controller]")]
 public class AuthController : ControllerBase
@@ -15,23 +14,18 @@ public class AuthController : ControllerBase
 
     public AuthController(IAuthService authService, ITokenService tokenService)
     {
-        _authService = authService;
         _tokenService = tokenService;
+        _authService = authService;
     }
 
     [HttpPost("Login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await _authService.LoginAsync(request);
-        
-        if (response == null)
-        {
-            return Unauthorized(new Result<LoginResponse>(false, "Invalid credentials"));
-        }
 
         Response.Cookies.Append("accessToken", response.AccessToken);
         Response.Cookies.Append("refreshToken", response.RefreshToken);
-        
+
         return Ok(new Result<LoginResponse>(true, response, "Successfully logged in"));
     }
 
@@ -40,36 +34,27 @@ public class AuthController : ControllerBase
     {
         var refreshToken = Request.Cookies["refreshToken"];
         var accessToken = Request.Cookies["accessToken"];
-        
+
         var request = new RefreshTokenRequest(await _tokenService.GetNameFromToken(accessToken), refreshToken);
-        
+
         var newTokens = await _authService.RefreshTokenAsync(request);
-        
-        if (newTokens == null)
-        {
-            return Unauthorized(new Result<RefreshTokenResponse>(false, "Invalid refresh token"));
-        }
-        
+
         Response.Cookies.Append("accessToken", newTokens.AccessToken);
         Response.Cookies.Append("refreshToken", newTokens.RefreshToken);
-        
+
         return Ok(new Result<RefreshTokenResponse>(true, newTokens, "Successfully refreshed token"));
     }
 
     [HttpPost("Test")]
     [Authorize(Policy = "AdminPolicy")]
-    public IActionResult Test()
+    public async Task<IActionResult> Test()
     {
         return Ok("Test");
     }
-    
-    [HttpPost("Logout")]
-    public IActionResult Logout()
-    {
-        // Clear cookies or handle logout logic here
-        Response.Cookies.Delete("accessToken");
-        Response.Cookies.Delete("refreshToken");
 
-        return Ok("Successfully logged out");
+    [HttpPost("Logout")]
+    public async Task<IActionResult> Logout()
+    {
+        return Ok("Logout");
     }
 }

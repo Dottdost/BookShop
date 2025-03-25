@@ -2,7 +2,7 @@ using BookShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BookShop.Data.FluentConfigs;
+namespace BookShop.Auth.Data.Config;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
