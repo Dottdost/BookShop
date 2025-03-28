@@ -1,5 +1,6 @@
 using AutoMapper;
 using BookShop.Auth.DTO.Requests;
+using BookShop.Auth.Models;
 using BookShop.Auth.Services.Interfaces;
 using BookShop.Data;
 using BookShop.Data.Models;

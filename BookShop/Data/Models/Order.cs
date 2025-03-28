@@ -1,4 +1,6 @@
-﻿namespace BookShop.Data.Models;
+﻿using BookShop.Auth.Models;
+
+namespace BookShop.Data.Models;
 
 public class Order
 {

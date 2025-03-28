@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            color: #ffffff;
+            background-color: #a24be2;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color:  #a24be2;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Registration confirmation</h2>
+    <p>Hello, {UserName}</p>
+    <p>You have received this email because you have registered on our website. Please confirm your email by clicking the button below:</p>
+    <p>
+        <a href="{link}" class="button">Confirm email</a>
+    </p>
+    <p>Sincerely,<br>Support Team</p>
+</div>
+</body>
+</html>

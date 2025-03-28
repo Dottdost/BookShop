@@ -1,8 +1,9 @@
+using BookShop.Auth.Models;
 using BookShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BookShop.Auth.Data.Config;
+namespace BookShop.Auth.DataAuth.ConfigAuth;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

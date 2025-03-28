@@ -1,9 +1,10 @@
-﻿namespace BookShop.Data.Models;
+﻿using BookShop.Data.Models;
+
+namespace BookShop.Auth.Models;
 
 public class User
 {
-    public int Id { get; set; } 
-
+    public Guid Id { get; set; }  // Изменено с int на Guid
     public string UserName { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

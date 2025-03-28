@@ -19,6 +19,7 @@ public class TokenService : ITokenService
         _context = context;
     }
 
+    // Получаем имя пользователя из токена
     public async Task<string> GetNameFromToken(string token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -29,25 +30,39 @@ public class TokenService : ITokenService
 
         var username = securityToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name);
 
-        return username.Value;
+        return username?.Value;
     }
 
+    // Создание токена для пользователя
     public async Task<string> CreateTokenAsync(string username)
     {
-        var userRoles = _context.UserRoles.Where(u => u.UserNameRef == username)
-            .Select(u => new { Role = u.RoleNameRef })
-            .AsNoTracking();
+        // Получаем пользователя по имени
+        var user = await _context.Users
+            .Where(u => u.UserName == username)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+            throw new UnauthorizedAccessException("Invalid username");
+
+        // Получаем роли пользователя
+        var userRoles = _context.UserRoles
+            .Where(u => u.UserId == user.Id)  // Используем Id пользователя для связи с ролями
+            .Select(u => u.Role.RoleName)  // Предположим, что у Role есть свойство Name
+            .AsNoTracking()
+            .ToList();
 
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, username),
         };
 
+        // Добавляем роли в claims
         foreach (var role in userRoles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role.Role));
+            claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        // Генерация токена
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"]));
         var signingCred = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
 
@@ -56,7 +71,8 @@ public class TokenService : ITokenService
             expires: DateTime.UtcNow.AddMinutes(15),
             issuer: _config["JWT:Issuer"],
             audience: _config["JWT:Audience"],
-            signingCredentials: signingCred);
+            signingCredentials: signingCred
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(securityToken);
     }

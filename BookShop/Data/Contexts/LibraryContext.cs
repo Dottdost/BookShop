@@ -1,3 +1,4 @@
+using BookShop.Auth.Models;
 using BookShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
