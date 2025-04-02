@@ -4,6 +4,8 @@ using BookShop.ADMIN.ServicesAdmin.AdminServices;
 using BookShop.ADMIN.ServicesAdmin.ReviewServices;
 using BookShop.ADMIN.ServicesAdmin.WarehouseServices;
 using BookShop.Auth.JWT;
+using BookShop.Auth.ServicesAuth.Classes;
+using BookShop.Auth.ServicesAuth.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,17 +13,24 @@ using Microsoft.OpenApi.Models;
 using BookShop.Data;
 using BookShop.Services.Implementations;
 using BookShop.Services.Interfaces;
+using AutoMapper;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 var culture = builder.Configuration.GetValue<string>("Culture") ?? "en-US";
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo(culture);
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(culture);
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddDbContext<LibraryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<IAccountService, AccountService>();
+
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 //orderService
