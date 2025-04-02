@@ -15,50 +15,45 @@ using BookShop.Services.Implementations;
 using BookShop.Services.Interfaces;
 using AutoMapper;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Настройка культуры
 var culture = builder.Configuration.GetValue<string>("Culture") ?? "en-US";
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo(culture);
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(culture);
+
+// Добавление AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+// Настройка базы данных
 builder.Services.AddDbContext<LibraryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Добавление контроллеров
 builder.Services.AddControllers();
 
+// Регистрация сервисов
 builder.Services.AddScoped<IAccountService, AccountService>();
-
 builder.Services.AddScoped<ITokenService, TokenService>();
-
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-//orderService
 builder.Services.AddScoped<IOrderService, OrderService>();
-//userService
 builder.Services.AddScoped<IUserService, UserService>();
-//warehouseService
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
-//reviewService
 builder.Services.AddScoped<IReviewService, ReviewService>();
-//adminService
 builder.Services.AddScoped<IAdminService, AdminService>();
 
+// Настройка JWT
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-
-
-// Настройка CORS - будем работать при добавдении фронта
+// Настройка CORS для React (Vite)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:<portSwagger>")
-                 // Адрес фронтенда
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials(); // Разрешает отправку куков с токенами
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
 });
 
 // Настройка аутентификации JWT
@@ -80,12 +75,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Настройка Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "BookShop API", Version = "v1" });
 
-    // Добавляем поддержку JWT в Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -114,6 +109,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Конфигурация middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -123,12 +119,17 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseExceptionHandler("/error");
+app.UseStatusCodePagesWithReExecute("/error/{0}"); // Для детальных ошибок
+
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend"); // Применяем CORS
+// Применение CORS политики
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.Run();
