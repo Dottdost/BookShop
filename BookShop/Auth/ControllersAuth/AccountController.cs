@@ -1,6 +1,6 @@
-using BookShop.Auth.DTO.Requests;
-using BookShop.Auth.DTO.Responses;
-using BookShop.Auth.Services.Interfaces;
+using BookShop.Auth.DTOAuth.Requests;
+using BookShop.Auth.DTOAuth.Responses;
+using BookShop.Auth.ServicesAuth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace BookShop.Auth.ControllersAuth;

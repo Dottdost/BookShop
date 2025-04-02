@@ -1,10 +1,11 @@
-using BookShop.Auth.DTO.Requests;
-using BookShop.Auth.DTO.Responses;
-using BookShop.Auth.Services.Interfaces;
+using BookShop.Auth.DTOAuth.Requests;
+using BookShop.Auth.DTOAuth.Responses;
+using BookShop.Auth.ServicesAuth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookShop.Auth.ControllersAuth;
+
 [ApiController]
 [Route("api/v1/[controller]")]
 public class AuthController : ControllerBase
@@ -23,8 +24,24 @@ public class AuthController : ControllerBase
     {
         var response = await _authService.LoginAsync(request);
 
-        Response.Cookies.Append("accessToken", response.AccessToken);
-        Response.Cookies.Append("refreshToken", response.RefreshToken);
+        if (response == null)
+        {
+            return Unauthorized(new { message = "Invalid credentials" });
+        }
+
+        Response.Cookies.Append("accessToken", response.AccessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
+
+        Response.Cookies.Append("refreshToken", response.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
 
         return Ok(new Result<LoginResponse>(true, response, "Successfully logged in"));
     }
@@ -35,26 +52,46 @@ public class AuthController : ControllerBase
         var refreshToken = Request.Cookies["refreshToken"];
         var accessToken = Request.Cookies["accessToken"];
 
-        var request = new RefreshTokenRequest(await _tokenService.GetNameFromToken(accessToken), refreshToken);
+        if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(accessToken))
+        {
+            return Unauthorized(new { message = "Invalid tokens" });
+        }
 
+        var request = new RefreshTokenRequest(await _tokenService.GetNameFromToken(accessToken), refreshToken);
         var newTokens = await _authService.RefreshTokenAsync(request);
 
-        Response.Cookies.Append("accessToken", newTokens.AccessToken);
-        Response.Cookies.Append("refreshToken", newTokens.RefreshToken);
+        Response.Cookies.Append("accessToken", newTokens.AccessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
+
+        Response.Cookies.Append("refreshToken", newTokens.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
 
         return Ok(new Result<RefreshTokenResponse>(true, newTokens, "Successfully refreshed token"));
     }
 
     [HttpPost("Test")]
     [Authorize(Policy = "AdminPolicy")]
-    public async Task<IActionResult> Test()
+    public IActionResult Test()
     {
-        return Ok("Test");
+        return Ok("Test successful");
     }
 
     [HttpPost("Logout")]
-    public async Task<IActionResult> Logout()
+    [Authorize]
+    public IActionResult Logout()
     {
-        return Ok("Logout");
+        Response.Cookies.Delete("accessToken");
+        Response.Cookies.Delete("refreshToken");
+
+        return Ok(new { message = "Successfully logged out" });
     }
 }
+               

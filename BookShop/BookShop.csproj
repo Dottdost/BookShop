@@ -31,8 +31,4 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Auth\ControllersAuth\Contexts\" />
-    </ItemGroup>
-
 </Project>
