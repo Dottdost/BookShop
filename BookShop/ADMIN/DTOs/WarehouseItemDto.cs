@@ -3,7 +3,7 @@ namespace BookShop.ADMIN.DTOs;
 
 public class WarehouseItemDto
 {
-    public Guid BookId { get; set; }
+    public int BookId { get; set; }
     public string Title { get; set; } = null!;
     public int Quantity { get; set; }
     public DateTime UpdatedAt { get; set; }

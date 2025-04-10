@@ -1,7 +1,11 @@
-namespace BookShop.Auth.ServicesAuth.Interfaces;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
-public interface ITokenService
+namespace BookShop.Auth.ServicesAuth.Interfaces
 {
-    Task<string> GetNameFromToken(string token);
-    Task<string> CreateTokenAsync(string username);
+    public interface ITokenService
+    {
+        Task<string> CreateTokenAsync(List<Claim> claims, int expirationMinutes = 15);
+        Task<string> GetNameFromToken(string token);
+    }
 }

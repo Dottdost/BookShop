@@ -1,9 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using BookShop.Data;
 using BookShop.Data.Models;
-using BookShop.Services.Interfaces;
-using BookShop.Shared.DTO.Requests;
+using BookShop.ADMIN.DTOs;
+using BookShop.Data.Contexts;
 using BookShop.Shared.DTO.Response;
+using BookShop.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookShop.Services.Implementations
 {
@@ -16,15 +17,17 @@ namespace BookShop.Services.Implementations
             _context = context;
         }
 
-        // Создание книги
-        public async Task<BookResponseDTO> CreateProductAsync(CreateBookDTO dto)
+        // Создание новой книги
+        public async Task<BookDto> CreateBookAsync(CreateBookDto dto)
         {
             var book = new Book
             {
                 Title = dto.Title,
                 Author = dto.Author,
-                Description = dto.Description,
                 Price = dto.Price,
+                Stock = dto.Stock,
+                Description = dto.Description,
+                ImageUrl = dto.ImageUrl,
                 GenreId = dto.GenreId,
                 PublisherId = dto.PublisherId
             };
@@ -32,53 +35,120 @@ namespace BookShop.Services.Implementations
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
 
-            return new BookResponseDTO(
-                book.Id,
-                book.Title,
-                book.Author,
-                book.Price,
-                book.Description ?? "Описание отсутствует",
-                book.GenreId.ToString(),
-                book.PublisherId.ToString()
-            );
+            var bookDto = new BookDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Price = book.Price,
+                Stock = book.Stock,
+                Description = book.Description,
+                ImageUrl = book.ImageUrl,
+                GenreName = book.Genre?.GenreName,  
+                PublisherName = book.Publisher?.Name 
+            };
+
+            return bookDto;
         }
 
-        // Получение книги по имени (по автору или названию)
-        public async Task<IEnumerable<BookResponseDTO>> GetProductAsync(string name)
+        // Получение книги по ID
+        public async Task<BookDto> GetBookAsync(int id)
         {
-            var books = await _context.Books
-                .Where(b => b.Title.Contains(name) || b.Author.Contains(name))
-                .Select(b => new BookResponseDTO(
-                    b.Id,
-                    b.Title,
-                    b.Author,
-                    b.Price,
-                    b.Description ?? "Описание отсутствует",
-                    b.GenreId.ToString(),
-                    b.PublisherId.ToString()
-                ))
-                .ToListAsync();
+            var book = await _context.Books
+                .Include(b => b.Genre)  
+                .Include(b => b.Publisher)  
+                .FirstOrDefaultAsync(b => b.Id == id);
 
-            return books;
+            if (book == null)
+            {
+                return null;
+            }
+
+            return new BookDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Price = book.Price,
+                Stock = book.Stock,
+                Description = book.Description,
+                ImageUrl = book.ImageUrl,
+                GenreName = book.Genre?.GenreName,
+                PublisherName = book.Publisher?.Name
+            };
         }
 
         // Получение списка книг с пагинацией
-        public async Task<IEnumerable<BookResponseDTO>> GetProductsAsync(int page = 1, int pageSize = 20)
+        public async Task<IEnumerable<BookDto>> GetBooksAsync(int page = 1, int pageSize = 20)
         {
-            var booksQuery = _context.Books
+            var books = await _context.Books
+                .Include(b => b.Genre)
+                .Include(b => b.Publisher)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(b => new BookResponseDTO(
-                    b.Id,
-                    b.Title,
-                    b.Author,
-                    b.Price,
-                    b.Description ?? "Описание отсутствует",
-                    b.GenreId.ToString(),
-                    b.PublisherId.ToString()
-                ));
+                .ToListAsync();
 
-            return await booksQuery.ToListAsync();
+            return books.Select(book => new BookDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Price = book.Price,
+                Stock = book.Stock,
+                Description = book.Description,
+                ImageUrl = book.ImageUrl,
+                GenreName = book.Genre?.GenreName,
+                PublisherName = book.Publisher?.Name
+            });
+        }
+
+        // Обновление информации о книге
+        public async Task<BookDto> UpdateBookAsync(int id, UpdateBookDto dto)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null)
+            {
+                return null;
+            }
+
+            book.Title = dto.Title;
+            book.Author = dto.Author;
+            book.Price = dto.Price;
+            book.Stock = dto.Stock;
+            book.Description = dto.Description;
+            book.ImageUrl = dto.ImageUrl;
+            book.GenreId = dto.GenreId;
+            book.PublisherId = dto.PublisherId;
+
+            await _context.SaveChangesAsync();
+
+            return new BookDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Price = book.Price,
+                Stock = book.Stock,
+                Description = book.Description,
+                ImageUrl = book.ImageUrl,
+                GenreName = book.Genre?.GenreName,
+                PublisherName = book.Publisher?.Name
+            };
+        }
+
+        // Удаление книги
+        public async Task<bool> DeleteBookAsync(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null)
+            {
+                return false;
+            }
+
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

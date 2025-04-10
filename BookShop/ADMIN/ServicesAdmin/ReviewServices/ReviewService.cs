@@ -1,5 +1,6 @@
 using BookShop.ADMIN.DTOs;
 using BookShop.Data;
+using BookShop.Data.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookShop.ADMIN.ServicesAdmin.ReviewServices;
@@ -32,7 +33,7 @@ public class ReviewService : IReviewService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var review = await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+        var review = await _context.Reviews.FirstOrDefaultAsync(r => Equals(r.Id, id));
         if (review == null) return false;
 
         _context.Reviews.Remove(review);

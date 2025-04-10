@@ -1,6 +1,7 @@
 using BookShop.ADMIN.DTOs;
 using Microsoft.EntityFrameworkCore;
 using BookShop.Data;
+using BookShop.Data.Contexts;
 
 namespace BookShop.ADMIN.ServicesAdmin.WarehouseServices;
 
@@ -27,15 +28,30 @@ public class WarehouseService : IWarehouseService
             .ToListAsync();
     }
 
-    public async Task<bool> UpdateStockAsync(Guid bookId, int amount)
+    public Task<bool> UpdateStockAsync(Guid bookId, int amount)
     {
+        throw new NotImplementedException();
+    }
+
+    public async Task<bool> UpdateStockAsync(int bookId, int amount)
+    {
+        // Находим склад по идентификатору книги
         var warehouse = await _context.Warehouses
-            .FirstOrDefaultAsync(w => w.BookId == bookId);
+            .FirstOrDefaultAsync(w => w.BookId == bookId);  // Используем int для идентификатора
 
         if (warehouse == null) return false;
 
-        warehouse.UpdateStock(amount);
+        // Обновляем количество на складе (добавляем или убавляем в зависимости от amount)
+        warehouse.Quantity += amount;
+
+        // Обновляем время последнего изменения
+        warehouse.UpdatedAt = DateTime.UtcNow;
+
+        // Сохраняем изменения в базе данных
         await _context.SaveChangesAsync();
-        return true;
+
+        return true;  // Возвращаем true, если обновление прошло успешно
     }
+
+    
 }

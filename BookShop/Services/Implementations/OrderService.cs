@@ -1,63 +1,154 @@
-using BookShop.ADMIN.DTOs;
+using BookShop.ADMIN.DTOs.OrderDto;
 using BookShop.Data;
+using BookShop.Data.Contexts;
 using BookShop.Data.Models;
+using BookShop.Shared.DTO.Requests;
+using BookShop.Shared.DTO.Response;
 using BookShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookShop.Services.Implementations;
-
-public class OrderService : IOrderService
+namespace BookShop.Services.Implementations
 {
-    private readonly LibraryContext _context;
-
-    public OrderService(LibraryContext context)
+    public class OrderService : IOrderService
     {
-        _context = context;
-    }
+        private readonly LibraryContext _context;
 
-    public async Task<List<OrderDto>> GetAllAsync()
-    {
-        return await _context.Orders
-            .Include(o => o.User)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                Username = o.User.UserName,
-                TotalPrice = o.TotalPrice,
-                Status = o.Status.ToString(),
-                CreatedAt = o.CreatedAt
-            })
-            .ToListAsync();
-    }
-
-    public async Task<OrderDto?> GetByIdAsync(Guid id)
-    {
-        var order = await _context.Orders
-            .Include(o => o.User)
-            .FirstOrDefaultAsync(o => o.Id == id);
-
-        if (order == null) return null;
-
-        return new OrderDto
+        public OrderService(LibraryContext context)
         {
-            Id = order.Id,
-            Username = order.User.UserName,
-            TotalPrice = order.TotalPrice,
-            Status = order.Status.ToString(),
-            CreatedAt = order.CreatedAt
-        };
-    }
+            _context = context;
+        }
 
-    public async Task<bool> UpdateStatusAsync(Guid id, string newStatus)
-    {
-        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null) return false;
+        // Создание нового заказа
+        public async Task<OrderResponseDTO> CreateOrderAsync(CreateOrderDTO dto)
+        {
+            var order = new Order
+            {
+                UserId = dto.UserId,
+                TotalPrice = dto.TotalPrice,
+                Status = Order.OrderStatus.Pending,
+                OrderDate = DateTime.UtcNow,
+                OrderItems = dto.OrderItems.Select(item => new OrderItem
+                {
+                    BookId = item.BookId,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                }).ToList()
+            };
 
-        if (!Enum.TryParse<Order.OrderStatus>(newStatus, true, out var parsedStatus))
-            return false;
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
 
-        order.Status = parsedStatus;
-        await _context.SaveChangesAsync();
-        return true;
+            return new OrderResponseDTO
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                Status = order.Status.ToString()
+            };
+        }
+
+        // Получение заказа по ID
+        public async Task<OrderResponseDTO> GetOrderByIdAsync(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return null;
+
+            return new OrderResponseDTO
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                Status = order.Status.ToString(),
+                OrderItems = order.OrderItems.Select(item => new OrderItemResponseDTO
+                {
+                    BookId = item.BookId,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                }).ToList()
+            };
+        }
+
+        // Получение всех заказов с пагинацией
+        public async Task<IEnumerable<OrderResponseDTO>> GetOrdersAsync(int page = 1, int pageSize = 20)
+        {
+            var orders = await _context.Orders
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(o => o.OrderItems)
+                .ToListAsync();
+
+            return orders.Select(order => new OrderResponseDTO
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                Status = order.Status.ToString(),
+                OrderItems = order.OrderItems.Select(item => new OrderItemResponseDTO
+                {
+                    BookId = item.BookId,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                }).ToList()
+            });
+        }
+
+        // Получение всех заказов по UserId с пагинацией
+        public async Task<IEnumerable<OrderResponseDTO>> GetOrdersByUserIdAsync(int userId, int page = 1, int pageSize = 20)
+        {
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(o => o.OrderItems)
+                .ToListAsync();
+
+            return orders.Select(order => new OrderResponseDTO
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                Status = order.Status.ToString(),
+                OrderItems = order.OrderItems.Select(item => new OrderItemResponseDTO
+                {
+                    BookId = item.BookId,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                }).ToList()
+            });
+        }
+
+        // Обновление статуса заказа
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, Order.OrderStatus status)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return false;
+
+            order.Status = status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Удаление заказа
+        public async Task<bool> DeleteOrderAsync(int orderId)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return false;
+
+            _context.Orders.Remove(order);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

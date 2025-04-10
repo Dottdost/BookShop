@@ -1,16 +1,15 @@
+using BookShop.Auth.ModelsAuth;
 using BookShop.Data.Models;
-
-namespace BookShop.Auth.ModelsAuth;
 
 public class User
 {
-    public Guid Id { get; set; }  
+    public int Id { get; set; }  // Используем int, если хотим использовать целочисленные идентификаторы
     public string UserName { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public bool IsEmailConfirmed { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
-    public Guid RefreshToken { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string RefreshToken { get; set; }
     public DateTime RefreshTokenExpiration { get; set; } = DateTime.Now.AddDays(7);
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();

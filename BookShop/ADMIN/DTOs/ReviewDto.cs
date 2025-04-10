@@ -2,7 +2,7 @@ namespace BookShop.ADMIN.DTOs;
 
 public class ReviewDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string UserName { get; set; } = null!;
     public string BookTitle { get; set; } = null!;
     public string Comment { get; set; } = null!; 

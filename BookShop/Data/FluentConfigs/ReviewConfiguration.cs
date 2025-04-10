@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace BookShop.Data.FluentConfigs;
+
 public class ReviewConfiguration : IEntityTypeConfiguration<Review>
 {
+    [Obsolete("Obsolete")]
     public void Configure(EntityTypeBuilder<Review> builder)
     {
         builder.HasKey(r => r.Id);

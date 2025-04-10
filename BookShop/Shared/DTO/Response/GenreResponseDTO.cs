@@ -1,9 +1,9 @@
 public record GenreResponseDTO(
-    Guid Id,
+    int Id,  
     string Name,
-    Guid? ParentGenreId,
+    int? ParentGenreId,  
     string? ParentGenreName,
     IEnumerable<GenreSubGenreDTO>? SubGenres
 );
 
-public record GenreSubGenreDTO(Guid Id, string Name);  // DTO для поджанров
+public record GenreSubGenreDTO(int Id, string Name);  

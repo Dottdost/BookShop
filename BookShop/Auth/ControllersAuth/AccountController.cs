@@ -1,50 +1,109 @@
 using BookShop.Auth.DTOAuth.Requests;
 using BookShop.Auth.DTOAuth.Responses;
-using BookShop.Auth.ServicesAuth.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-namespace BookShop.Auth.ControllersAuth;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
-[Route("api/v1/[controller]")]
-public class AccountController : ControllerBase
+namespace BookShop.Auth.ControllersAuth
 {
-    private readonly IAccountService _accountService;
-
-    public AccountController(IAccountService accountService)
+    [Route("api/v1/[controller]")]
+    [ApiController]
+    public class AccountController : ControllerBase
     {
-        _accountService = accountService;
+        private readonly IAccountService _accountService;
+
+        public AccountController(IAccountService accountService)
+        {
+            _accountService = accountService;
+        }
+
+        // Регистрация пользователя
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            try
+            {
+                var result = await _accountService.RegisterAsync(request);
+
+                // Проверка результата
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new Result<string>(false, null, result.Message));  // Возвращаем ошибку с сообщением
+                }
+
+                Debug.Assert(result.Data != null, "result.Data != null");
+                return Ok(Result<string>.Success(result.Data, "Successfully registered"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Result<string>(false, null, $"Error during registration: {ex.Message}"));
+            }
+        }
+
+        // Подтверждение email по токену
+        [HttpGet("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmailAsync([FromQuery] string token)
+        {
+            try
+            {
+                await _accountService.VerifyEmailAsync(token);
+                return Ok(new Result<string>(true, null, "Email successfully confirmed"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Result<string>(false, null, $"Error during email confirmation: {ex.Message}"));
+            }
+        }
+
+        // Отправка ссылки для подтверждения email
+        [Authorize] // Защищаем метод
+        [HttpPost("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmailAsync([FromBody] ConfirmRequest request)
+        {
+            try
+            {
+                await _accountService.ConfirmEmailAsync(request);
+                return Ok(Result<string>.Success(request.Username, "Email confirmation link sent"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Result<string>(false, null, $"Error during email confirmation: {ex.Message}"));
+            }
+        }
+
+        // Запрос на сброс пароля
+        [HttpPost("RequestPasswordReset")]
+        public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
+        {
+            try
+            {
+                await _accountService.RequestPasswordResetAsync(email);
+                return Ok(new Result<string>(true, null, "Password reset link sent to your email"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Result<string>(false, null, $"Error during password reset request: {ex.Message}"));
+            }
+        }
+
+        // Сброс пароля
+        [HttpPost("ResetPassword/{token}")] // Используем параметр {token}
+        public async Task<IActionResult> ResetPassword([FromRoute] string token, [FromBody] ResetPasswordRequest request)
+        {
+            try
+            {
+                await _accountService.ResetPasswordAsync(token, request.NewPassword);
+                return Ok(new Result<string>(true, null, "Password successfully reset"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Result<string>(false, null, $"Error during password reset: {ex.Message}"));
+            }
+        }
+
+        // Сброс пароля (не реализован)
+        // Этот метод больше не нужен, так как мы изменили маршрут выше.
     }
-
-    [HttpPost("Register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-    {
-        await _accountService.RegisterAsync(request);
-
-        return Ok(new Result<string>(true, request.Username, "Successfully registered"));
-    }
-
-
-
-    [HttpGet("VerifyEmail")]
-    public async Task<IActionResult> VerifyEmailAsync([FromQuery] string token)
-    {
-        await _accountService.VerifyEmailAsync(token);
-
-        return Ok(new Result<string>(true, "Email confirmed", "Email confirmed"));
-    }
-
-    [Authorize(Policy = "UserPolicy")]
-    [HttpPost("ConfirmEmail")]
-    public async Task<IActionResult> ConfirmEmailAsync([FromBody] ConfirmRequest request)
-    {
-        await _accountService.ConfirmEmailAsync(request, HttpContext);
-
-        return Ok(new Result<string>(true, request.Username, "Email sent"));
-    }
-    [HttpPost("ResetPassword")]
-    public async Task<IActionResult> ResetPasswordAsync()
-    {
-        return BadRequest(new Result<string>(false, "Not implemented"));
-    }
-
 }

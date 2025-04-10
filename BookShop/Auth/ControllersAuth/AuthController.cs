@@ -1,97 +1,140 @@
+using System.Security.Claims;
+using System.Security.Cryptography;
 using BookShop.Auth.DTOAuth.Requests;
 using BookShop.Auth.DTOAuth.Responses;
+using BookShop.Auth.ModelsAuth;
 using BookShop.Auth.ServicesAuth.Interfaces;
+using BookShop.Data;
+using BookShop.Data.Contexts;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace BookShop.Auth.ControllersAuth;
-
-[ApiController]
-[Route("api/v1/[controller]")]
-public class AuthController : ControllerBase
+namespace BookShop.Auth.ControllersAuth
 {
-    private readonly IAuthService _authService;
-    private readonly ITokenService _tokenService;
-
-    public AuthController(IAuthService authService, ITokenService tokenService)
+    [ApiController]
+    [Route("api/v1/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _tokenService = tokenService;
-        _authService = authService;
-    }
+        private readonly IAuthService _authService;
+        private readonly ITokenService _tokenService;
+        private readonly LibraryContext _context;  
 
-    [HttpPost("Login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        var response = await _authService.LoginAsync(request);
-
-        if (response == null)
+        public AuthController(IAuthService authService, ITokenService tokenService, LibraryContext context)
         {
-            return Unauthorized(new { message = "Invalid credentials" });
+            _tokenService = tokenService;
+            _authService = authService;
+            _context = context; 
         }
 
-        Response.Cookies.Append("accessToken", response.AccessToken, new CookieOptions
+        // Login
+        [HttpPost("Login")]
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
-        });
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == request.Username);
+            if (user == null)
+            {
+                throw new Exception("Invalid username or password");
+            }
 
-        Response.Cookies.Append("refreshToken", response.RefreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
-        });
+            var passwordHasher = new PasswordHasher<User>();
+            var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
-        return Ok(new Result<LoginResponse>(true, response, "Successfully logged in"));
-    }
+            if (result == PasswordVerificationResult.Failed)
+            {
+                throw new Exception("Invalid username or password");
+            }
 
-    [HttpPost("Refresh")]
-    public async Task<IActionResult> Refresh()
-    {
-        var refreshToken = Request.Cookies["refreshToken"];
-        var accessToken = Request.Cookies["accessToken"];
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, request.Username)
+            };
 
-        if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(accessToken))
-        {
-            return Unauthorized(new { message = "Invalid tokens" });
+            var accessToken = await _tokenService.CreateTokenAsync(claims);
+            var refreshToken = GenerateRefreshToken();  // Генерация нового refresh токена
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiration = DateTime.Now.AddDays(7);
+
+            await _context.SaveChangesAsync();
+
+            return new LoginResponse(accessToken, refreshToken);  // Используем record для возвращаемого значения
         }
 
-        var request = new RefreshTokenRequest(await _tokenService.GetNameFromToken(accessToken), refreshToken);
-        var newTokens = await _authService.RefreshTokenAsync(request);
-
-        Response.Cookies.Append("accessToken", newTokens.AccessToken, new CookieOptions
+        // Refresh Token
+        [HttpPost("Refresh")]
+        public async Task<IActionResult> Refresh()
         {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
-        });
+            var refreshToken = Request.Cookies["refreshToken"];
+            var accessToken = Request.Cookies["accessToken"];
 
-        Response.Cookies.Append("refreshToken", newTokens.RefreshToken, new CookieOptions
+            if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(accessToken))
+            {
+                return Unauthorized(new { message = "Invalid tokens" });
+            }
+
+            try
+            {
+                var request = new RefreshTokenRequest(await _tokenService.GetNameFromToken(accessToken), refreshToken);
+                var newTokens = await _authService.RefreshTokenAsync(request);
+
+                SetTokensInCookies(newTokens.AccessToken, newTokens.RefreshToken);
+
+                return Ok(new Result<RefreshTokenResponse>(true, newTokens, "Successfully refreshed token"));
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { message = "Invalid refresh token" });
+            }
+        }
+
+        // Logout
+        [HttpPost("Logout")]
+        [Authorize]
+        public IActionResult Logout()
         {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict
-        });
+            Response.Cookies.Delete("accessToken");
+            Response.Cookies.Delete("refreshToken");
 
-        return Ok(new Result<RefreshTokenResponse>(true, newTokens, "Successfully refreshed token"));
-    }
+            return Ok(new { message = "Successfully logged out" });
+        }
 
-    [HttpPost("Test")]
-    [Authorize(Policy = "AdminPolicy")]
-    public IActionResult Test()
-    {
-        return Ok("Test successful");
-    }
+        // Test
+        [HttpPost("Test")]
+        [Authorize(Policy = "AdminPolicy")]
+        public IActionResult Test()
+        {
+            return Ok("Test successful");
+        }
 
-    [HttpPost("Logout")]
-    [Authorize]
-    public IActionResult Logout()
-    {
-        Response.Cookies.Delete("accessToken");
-        Response.Cookies.Delete("refreshToken");
+        // Helper method to set tokens in cookies
+        private void SetTokensInCookies(string accessToken, string refreshToken)
+        {
+            Response.Cookies.Append("accessToken", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict
+            });
 
-        return Ok(new { message = "Successfully logged out" });
+            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict
+            });
+        }
+
+        // Метод для генерации refresh токена
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32]; 
+            using (var rng = RandomNumberGenerator.Create()) 
+            {
+                rng.GetBytes(randomNumber);
+            }
+            return Convert.ToBase64String(randomNumber); // Генерируем refresh token в виде Base64 строки
+        }//заменить потом на ша 256
     }
 }
-               

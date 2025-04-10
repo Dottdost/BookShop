@@ -4,10 +4,10 @@ using BookShop.Data.Models;
 
 public class Review
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public int Id { get; set; } 
 
-    public Guid UserId { get; set; }
-    public Guid BookId { get; set; }
+    public int UserId { get; set; }
+    public int BookId { get; set; }
 
     [Range(1, 5, ErrorMessage = "Range has to be between 1 and 5")]
     public int Rating { get; set; }

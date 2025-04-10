@@ -3,7 +3,7 @@ using BookShop.Auth.ModelsAuth;
 using BookShop.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookShop.Data;
+namespace BookShop.Data.Contexts;
 
 public class LibraryContext : DbContext
 {

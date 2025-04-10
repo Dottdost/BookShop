@@ -14,25 +14,33 @@ using BookShop.Data;
 using BookShop.Services.Implementations;
 using BookShop.Services.Interfaces;
 using AutoMapper;
+using BookShop.Data.Contexts;
+using BookShop.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Настройка культуры
+// Локализация
 var culture = builder.Configuration.GetValue<string>("Culture") ?? "en-US";
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo(culture);
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo(culture);
 
-// Добавление AutoMapper
+// AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Настройка базы данных
+// DB Context
 builder.Services.AddDbContext<LibraryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавление контроллеров
-builder.Services.AddControllers();
+// Контроллеры с настройкой сериализации
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+});
 
-// Регистрация сервисов
+
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+
+// DI сервисов
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -40,23 +48,26 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>(); 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings")); // Регистрация конфигурации
 
-// Настройка JWT
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-// Настройка CORS для React (Vite)
+
+// CORS 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyMethod()
+        policy.WithOrigins("http://localhost:3000", "https://localhost:44308") // React + Swagger
               .AllowAnyHeader()
+              .AllowAnyMethod()
               .AllowCredentials();
     });
 });
 
-// Настройка аутентификации JWT
+// JWT аутентификация
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
@@ -75,7 +86,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Настройка Swagger
+// ДОБАВЛЯЕМ UserPolicy
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("UserPolicy", policy =>
+    {
+        policy.RequireRole("User");
+    });
+
+    options.AddPolicy("AdminPolicy", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
+});
+
+// Swagger + JWT
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -109,7 +134,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Конфигурация middleware
+// Swagger UI
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -119,13 +144,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseExceptionHandler("/error");
-app.UseStatusCodePagesWithReExecute("/error/{0}"); // Для детальных ошибок
-
 app.UseHttpsRedirection();
 
-// Применение CORS политики
-app.UseCors("AllowFrontend");
+app.UseCors("AllowFrontend"); // Включаем CORS
 
 app.UseAuthentication();
 app.UseAuthorization();

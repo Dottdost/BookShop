@@ -1,8 +1,8 @@
-﻿namespace BookShop.Data.Models;
+﻿using BookShop.Data.Models;
 
 public class Book
 {
-    public Guid Id { get; set; } = Guid.NewGuid(); 
+    public int Id { get; set; }  // ID книги, например, int
     public string Title { get; set; } = string.Empty;
     public string Author { get; set; } = string.Empty;
     public decimal Price { get; set; }
@@ -10,14 +10,13 @@ public class Book
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
 
-    public Guid GenreId { get; set; } 
-    public Guid? PublisherId { get; set; }
-    
-    public string GenreName { get; set; }
-    public string PublisherName { get; set; }
+    public int GenreId { get; set; }  // ID жанра
+    public int? PublisherId { get; set; }  // Используем int для PublisherId
+    public string GenreName { get; set; } = string.Empty;
+    public string PublisherName { get; set; } = string.Empty;
 
     public Genre Genre { get; set; } = null!;
-    public Publisher? Publisher { get; set; } = null!;
+    public Publisher? Publisher { get; set; }  // Связь с Publisher
     public Warehouse? Warehouse { get; set; }
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<BookAttributeValue> BookAttributeValues { get; set; } = new List<BookAttributeValue>();
